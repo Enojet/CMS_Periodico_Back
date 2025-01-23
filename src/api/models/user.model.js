@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['editor', 'writer'], required: true }
 });
 
-// Middleware para encriptar el password antes de guardar
+// Middleware para encriptar la password 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
@@ -15,7 +15,7 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
-// Método para comparar contraseñas
+// Metodo para comparar contraseñas
 UserSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
 };

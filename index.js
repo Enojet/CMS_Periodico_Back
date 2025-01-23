@@ -5,6 +5,7 @@ require('dotenv').config();
 connectDB();
 
 const server = express();
+
 //Middleware para el JSON
 server.use(express.json());
 
@@ -20,4 +21,4 @@ server.use((req, res, next) => {
   console.log('Request: ${req.method} ${req.url}');
   next
 })
-*/  
+*/

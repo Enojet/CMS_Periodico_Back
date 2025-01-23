@@ -5,7 +5,7 @@ const { JWT_SECRET } = process.env;
 const register = async (req, res) => {
     try {
         const { username, password, role } = req.body;
-        if (!['editor', 'redactor'].includes(role)) {
+        if (!['editor', 'writer'].includes(role)) {
             return res.status(400).json({ message: 'Invalid role' });
         }
         const user = new User({ username, password, role });
