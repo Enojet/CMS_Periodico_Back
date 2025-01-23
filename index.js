@@ -7,9 +7,9 @@ connectDB();
 //Conexion con Cloudinary
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
-  cloud_name: 'CMS-Periodico',
-  api_key: '202409FSDPTHIB',
-  api_secret: '1NfV9v7e0p9VXJ9B2g8I8Y5N8dM'
+  cloud_name: 'process.env.CLOUDINARY_CLOUD_NAME',
+  api_key: 'process.env.CLOUDINARY_API_KEY',
+  api_secret: 'process.env.CLOUDINARY_API_SECRET'
 });
 
 const server = express();
