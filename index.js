@@ -1,16 +1,23 @@
-const express = require('express');
-require('dotenv').config(); //configuro mi servidor para usar variable de entorno
+const express = require('express'); 
 const connectDB = require('./src/utils/db_mongo');
-const routerUser = require('./src/api/routers/user.routes');
+const routes = require('./src/api/routers/routes');
+require('dotenv').config();
 connectDB();
 
 const server = express();
+//Middleware para el JSON
 server.use(express.json());
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 4200;
 
-server.use('/', routerUser);
-
+server.use('/', routes);
 server.listen(PORT, () => {
-  console.log(`server running port http://localhost:${PORT}`);
+  console.log(`Server running port http://localhost:${PORT}`);
 });
+
+/*
+server.use((req, res, next) => {
+  console.log('Request: ${req.method} ${req.url}');
+  next
+})
+*/  
