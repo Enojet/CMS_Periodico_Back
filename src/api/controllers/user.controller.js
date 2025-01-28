@@ -1,14 +1,15 @@
-/*const User = require('../models/user.model');
+const Users = require('../models/user.model');
+const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 
 const register = async (req, res) => {
     try {
-        const { username, password, role } = req.body;
+        const { username,completeName, password, role } = req.body;
         if (!['editor', 'writer'].includes(role)) {
             return res.status(400).json({ message: 'Invalid role' });
         }
-        const user = new User({ username, password, role });
+        const user = new User({ username, completeName, password, role });
         await user.save();
         res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
@@ -30,7 +31,16 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = {
-    register,
-    login
-}*/
+const getAllEditor=async(req,res)=>{
+    try {
+        const editors = await Users.find({role:'editor'});
+        if(editors.length===0){
+            return res.status(404).json({ message: 'No se encontraron editores.' });
+        }
+        res.status(200).json(editors);
+    } catch (error) {
+        res.status(500).json({  error: 'Error al obtener los editores', message: error.message  });
+    }
+}
+
+module.exports = { register, login, getAllEditor }

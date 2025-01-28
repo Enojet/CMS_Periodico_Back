@@ -9,9 +9,10 @@ const articlesSchema = new Schema(
         section: { type: String,enum:['economy', 'politics','science','sports'], required: true },
         image:{type: String},//mirar como es el tipo imagen
         body: { type: String, required: true },
-        author:{ type: String, required: true },
-        status:{type: String, enum:['draft', 'review','publish'], default:'draft' },// aquí hay que poner draft, revisable, published
-        editorId: [{ type: Schema.Types.ObjectId, ref: "users"}]
+        author:{ type: Schema.Types.ObjectId, ref: "user"},//populate
+        status:{type: String, enum:['draft', 'review','publish'], default:'draft', required: true },// aquí hay que poner draft, revisable, published
+        editorId: { type: Schema.Types.ObjectId, ref: "user"}/* ,
+       hightlight:{type:Boolean, required:true}*/
     },
     {
         collection: 'articles',
