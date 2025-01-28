@@ -8,10 +8,10 @@ const register = async (req, res) => {
         const { username,completeName, password, role } = req.body;
         if (!['editor', 'writer'].includes(role)) {
             return res.status(400).json({ message: 'Invalid role' });
-        }
+        };
         const user = new User({ username, completeName, password, role });
         await user.save();
-        res.status(201).json({ message: 'User created successfully' });
+        res.status(201).json({ message: 'User created successfully', data:user });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -25,7 +25,7 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-        res.json({ token, role: user.role });
+        res.json({ token, role: user.role, data:user });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
