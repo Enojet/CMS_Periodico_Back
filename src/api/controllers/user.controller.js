@@ -1,4 +1,3 @@
-const Users = require('../models/user.model');
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
@@ -26,7 +25,7 @@ const login = async (req, res) => {
         }
         const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
         res.json({ token, role: user.role, data:user });
-    } catch (error) {
+    } catch (error) {gi
         res.status(500).json({ error: error.message });
     }
 };
