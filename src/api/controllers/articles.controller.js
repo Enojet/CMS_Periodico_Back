@@ -20,7 +20,8 @@ const allPublishArticles = async (req, res) => {
         body: item.body,
         author: item.author,
         status: item.status,
-        editorId: item.editorId
+        editorId: item.editorId,
+        hightlight: item.hightlight
         
       }
       return article;
