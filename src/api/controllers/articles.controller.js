@@ -8,9 +8,28 @@ const allPublishArticles = async (req, res) => {
       .sort({ date: -1 }) // Ordena por fecha descendente
       .populate('author', ' completeName') // Popula los campos de `author`
       .populate('editorId', 'completeName'); // Popula los campos de `editorId`
+      console.log(articles);
+    const newArticle=articles.map((item)=>{
+      const fecha=item.date.toISOString().split("T")[0];
+      const article={_id: item._id,
+        title: item.title,
+        subtitle: item.subtitle,
+        date: fecha,
+        section: item.section,
+        image: item.image,
+        body: item.body,
+        author: item.author,
+        status: item.status,
+        editorId: item.editorId,
+        hightlight: item.hightlight
+        
+      }
+      return article;
+    })
 
-    res.json(articles);
+    res.json(newArticle);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
