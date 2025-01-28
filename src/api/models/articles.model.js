@@ -11,8 +11,8 @@ const articlesSchema = new Schema(
         body: { type: String, required: true },
         author:{ type: Schema.Types.ObjectId, ref: "user"},//populate
         status:{type: String, enum:['draft', 'review','publish'], default:'draft', required: true },// aquí hay que poner draft, revisable, published
-        editorId: { type: Schema.Types.ObjectId, ref: "user"}/* ,
-       hightlight:{type:Boolean, required:true}*/
+        editorId: { type: Schema.Types.ObjectId, ref: "user"},
+        hightlight:{type:Boolean, required:true}
     },
     {
         collection: 'articles',

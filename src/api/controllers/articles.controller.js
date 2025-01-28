@@ -76,8 +76,8 @@ const articlesByEditor = async (req, res) => {
 };
 const createArticle = async (req, res) => {
   try {
-    // Desestructuramos los datos que vienen en el body de la solicitud
-    const { title, subtitle, date, section, image, body, author, status, editorId } = req.body;
+    // Hacemos un destructuring de los datos que vienen en el body de la solicitud
+    const { title, subtitle, date, section, image, body, author, status, editorId, hightlight } = req.body;
 
     // Verificar que el autor y el editor existan en la base de datos
     const authorExists = await Users.findById(author);
@@ -101,7 +101,8 @@ const createArticle = async (req, res) => {
       body,
       author,
       status,
-      editorId
+      editorId,
+      hightlight
     });
 
     // Guardar el artículo en la base de datos
