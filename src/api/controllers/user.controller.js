@@ -32,7 +32,7 @@ const login = async (req, res) => {
 
 const getAllEditor=async(req,res)=>{
     try {
-        const editors = await Users.find({role:'editor'});
+        const editors = await User.find({role:'editor'});
         if(editors.length===0){
             return res.status(404).json({ message: 'No se encontraron editores.' });
         }
