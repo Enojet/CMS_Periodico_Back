@@ -17,7 +17,7 @@ cloudinary.config({
 
 const server = express();
 server.use(express.json()); // Usar middleware JSON para las peticiones
-server.use(express.json());
+
 
 server.use(cors({
     origin: "*",
