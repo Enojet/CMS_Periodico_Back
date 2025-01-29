@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 
 const register = async (req, res) => {
-    try {
+    try{
         const { username,completeName, password, role } = req.body;
         if (!['editor', 'writer'].includes(role)) {
             return res.status(400).json({ message: 'Invalid role' });
@@ -11,9 +11,10 @@ const register = async (req, res) => {
         const user = new User({ username, completeName, password, role });
         await user.save();
         res.status(201).json({ message: 'User created successfully', data:user });
-    } catch (error) {
+
+    }catch(error){
         res.status(500).json({ error: error.message });
-    }
+    };
 };
 
 const login = async (req, res) => {
