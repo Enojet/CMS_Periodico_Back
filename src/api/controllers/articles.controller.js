@@ -21,7 +21,7 @@ const allPublishArticles = async (req, res) => {
         author: item.author,
         status: item.status,
         editorId: item.editorId,
-        hightlight: item.hightlight
+        highlight: item.highlight
         
       }
       return article;
