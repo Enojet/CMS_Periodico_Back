@@ -262,7 +262,24 @@ const asignEditor = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const  imageUpload=async( req, res)=>{
+  const newArticle=new Articles(req.body);
+  if(req.file.path){
+    newArticle.image=req.file.path;
+  }
+  const createdArticle=await newArticle.save();
+  return res.json(createdArticle);
+};
 
 
 
-module.exports =  {allPublishArticles, articlesByAuthor, articlesByEditor, createArticle, detailArticleById, updateArticleById, updateStatus , asignEditor}
+module.exports =  {
+  allPublishArticles,
+  articlesByAuthor, 
+  articlesByEditor, 
+  createArticle, 
+  detailArticleById, 
+  updateArticleById, 
+  updateStatus , 
+  asignEditor,
+  imageUpload}

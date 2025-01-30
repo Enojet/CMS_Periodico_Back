@@ -4,14 +4,15 @@ require('dotenv').config(); // Para las variables de entorno
 const connectDB = require('./src/utils/db_mongo'); // Conexión a MongoDB
 const router = require('./src/api/routers/routes'); // Asegúrate de que esta importación sea correcta
 const cors = require("cors");
+const cloudinary=require("cloudinary").v2
 
 connectDB(); // Conectar a la base de datos
-//Conexion con Cloudinary
-const cloudinary = require('cloudinary').v2;
+//Conexion con  servidor de Cloudinary
+
 cloudinary.config({
-  cloud_name: 'process.env.CLOUD_NAME',
-  api_key: 'process.env.API_KEY',
-  api_secret: 'process.env.API_SECRET'
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
 });
 
 
