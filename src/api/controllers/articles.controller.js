@@ -96,7 +96,7 @@ const articlesByEditor = async (req, res) => {
 const createArticle = async (req, res) => {
   try {
     // Hacemos un destructuring de los datos que vienen en el body de la solicitud
-    const { title, subtitle, date, section, image, body, author, status, editorId, highlight } = req.body;
+    const { title, subtitle, date, section, body, author, status, editorId, highlight } = req.body;
 
     // Verificar que el autor y el editor existan en la base de datos
     const authorExists = await Users.findById(author);
@@ -112,13 +112,15 @@ const createArticle = async (req, res) => {
       subtitle,
       date,
       section,
-      image,
       body,
       author,
       status,
       editorId,
       highlight
     });
+    if (req.file){
+      newArticle.image=req.file.path;
+    }
 
     // Guardar el artículo en la base de datos
     const createdArticle = await newArticle.save();
@@ -168,7 +170,10 @@ const updateArticleById = async (req, res) => {
     if (!findArticle) {
       return res.status(404).json({ msg: 'Artículo no encontrado' });
     }
-    // Si el artículo está en estado 'draft' o 'revisable', proceder con la actualización
+    if (req.file){
+      articleUpdates.image=req.file.path;
+    }
+    
     const updatedArticle = await Articles.findByIdAndUpdate(id, articleUpdates, { new: true });
 
     // Si la actualización fue exitosa, responder con el artículo actualizado
@@ -263,13 +268,16 @@ const asignEditor = async (req, res) => {
   }
 };
 const  imageUpload=async( req, res)=>{
+  try{
   const newArticle=new Articles(req.body);
   if(req.file.path){
     newArticle.image=req.file.path;
   }
   const createdArticle=await newArticle.save();
   return res.json(createdArticle);
-};
+}catch(error){
+  return res.status(500).son({message:"Error al subir la imagen", error:error.message})
+}};
 
 
 
