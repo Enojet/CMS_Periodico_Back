@@ -1,3 +1,4 @@
+
 const Articles = require("../models/articles.model");
 const Users=require("../models/user.model");
 const mongoose=require('mongoose');
@@ -21,7 +22,7 @@ const allPublishArticles = async (req, res) => {
         author: item.author,
         status: item.status,
         editorId: item.editorId,
-        hightlight: item.hightlight
+        highlight: item.highlight
         
       }
       return article;
@@ -96,18 +97,14 @@ const articlesByEditor = async (req, res) => {
 const createArticle = async (req, res) => {
   try {
     // Hacemos un destructuring de los datos que vienen en el body de la solicitud
-    const { title, subtitle, date, section, image, body, author, status, editorId, hightlight } = req.body;
+    const { title, subtitle, date, section, body, author, status, editorId, highlight } = req.body;
 
     // Verificar que el autor y el editor existan en la base de datos
     const authorExists = await Users.findById(author);
-    const editorExists = await Users.findById(editorId);
+    //const editorExists = await Users.findById(editorId);
 
     if (!authorExists) {
       return res.status(404).json({ message: 'El autor no existe' });
-    }
-
-    if (!editorExists) {
-      return res.status(404).json({ message: 'El editor no existe' });
     }
 
     // Crear un nuevo artículo
@@ -116,13 +113,15 @@ const createArticle = async (req, res) => {
       subtitle,
       date,
       section,
-      image,
       body,
       author,
       status,
       editorId,
-      hightlight
+      highlight
     });
+    if (req.file){
+      newArticle.image=req.file.path;
+    }
 
     // Guardar el artículo en la base de datos
     const createdArticle = await newArticle.save();
@@ -168,20 +167,14 @@ const updateArticleById = async (req, res) => {
   try {
     // Buscar el artículo en la base de datos
     const findArticle = await Articles.findById(id);
-
     // Si el artículo no existe, devolver un error
     if (!findArticle) {
       return res.status(404).json({ msg: 'Artículo no encontrado' });
     }
-
-    // Verificar si el artículo está en estado 'publish', no se debe poder editar
-    if (findArticle.status === 'publish') {
-      return res.status(403).json({
-        message: 'No se puede editar un artículo publicado'
-      });
+    if (req.file){
+      articleUpdates.image=req.file.path;
     }
-
-    // Si el artículo está en estado 'draft' o 'review', proceder con la actualización
+    
     const updatedArticle = await Articles.findByIdAndUpdate(id, articleUpdates, { new: true });
 
     // Si la actualización fue exitosa, responder con el artículo actualizado
@@ -199,21 +192,25 @@ const updateStatus = async (req, res) => {
       return res.status(404).json({ message: 'Artículo no encontrado' });
     }
 
-    // Solo el writer puede cambiar el estado de 'draft' a 'review'
+    // Solo el writer puede cambiar el estado de 'draft' a 'revisable'
     if (article.status === 'draft') {
-      if (req.params.status === 'review') {
-        article.status = 'review';
+      if (req.params.status === 'revisable') {
+        article.status = 'revisable';
         await article.save();
         return res.json(article);
       } else {
-        return res.status(400).json({ message: 'El estado solo puede ser pasar de "draft" a "review".' });
+        return res.status(400).json({ message: 'El estado solo puede ser pasar de "draft" a "revisable".' });
       }
     }
 
-    // El editor puede cambiar el estado de 'review' a 'draft' o 'publish'
-    if (article.status === 'review') {
+    // El editor puede cambiar el estado de 'revisable' a 'draft' o 'publish'
+    if (article.status === 'revisable') {
       if (req.params.status && ['draft', 'publish'].includes(req.params.status)) {
         article.status = req.params.status; // Asume que el nuevo status está en req.params.status
+        // Si el estado es 'publish', ponemos la fecha actual
+        if (article.status === 'publish') {
+        article.date = new Date(); // Asigna la fecha actual
+        }
         await article.save();
         return res.json(article);
       } else {
@@ -246,9 +243,9 @@ const asignEditor = async (req, res) => {
       return res.status(400).json({ message: 'El editor ya está asignado a este artículo' });
     }
 
-    // Verificar si el artículo está en estado 'review'
-    if (article.status !== 'review') {
-      return res.status(400).json({ message: 'Solo se pueden asignar artículos en revisión' });
+    // Verificar si el artículo está en estado 'revisable'
+    if (article.status !== 'revisable') {
+    return res.status(400).json({ message: 'Solo se pueden asignar artículos en revisión' });
     }
 
     // Buscar al editor por su ID
@@ -271,7 +268,27 @@ const asignEditor = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const  imageUpload=async( req, res)=>{
+  try{
+  const newArticle=new Articles(req.body);
+  if(req.file.path){
+    newArticle.image=req.file.path;
+  }
+  const createdArticle=await newArticle.save();
+  return res.json(createdArticle);
+}catch(error){
+  return res.status(500).son({message:"Error al subir la imagen", error:error.message})
+}};
 
 
 
-module.exports =  {allPublishArticles, articlesByAuthor, articlesByEditor, createArticle, detailArticleById, updateArticleById, updateStatus , asignEditor}
+module.exports =  {
+  allPublishArticles,
+  articlesByAuthor, 
+  articlesByEditor, 
+  createArticle, 
+  detailArticleById, 
+  updateArticleById, 
+  updateStatus , 
+  asignEditor,
+  imageUpload}
