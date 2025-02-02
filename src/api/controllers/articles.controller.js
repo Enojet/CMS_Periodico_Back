@@ -11,11 +11,11 @@ const allPublishArticles = async (req, res) => {
       .populate('editorId', 'completeName'); // Popula los campos de `editorId`
       console.log(articles);
     const newArticle=articles.map((item)=>{
-      const fecha=item.date.toISOString().split("T")[0];
+      //const fecha=item.date.toISOString().split("T")[0];
       const article={_id: item._id,
         title: item.title,
         subtitle: item.subtitle,
-        date: fecha,
+        date: item.data,//fecha,
         section: item.section,
         image: item.image,
         body: item.body,
