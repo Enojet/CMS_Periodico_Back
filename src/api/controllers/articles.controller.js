@@ -1,53 +1,66 @@
 const Articles = require("../models/articles.model");
-const Users=require("../models/user.model");
-const mongoose=require('mongoose');
+const Users = require("../models/user.model");
+const mongoose = require('mongoose');
 
 const allPublishArticles = async (req, res) => {
   try {
+    // Buscar artículos con estado 'publish' y ordenarlos por fecha descendente
     const articles = await Articles.find({ status: 'publish' }) // Filtra solo los artículos publicados
       .sort({ date: -1 }) // Ordena por fecha descendente
-      .populate('author', ' completeName') // Popula los campos de `author`
-      .populate('editorId', 'completeName'); // Popula los campos de `editorId`
-      console.log(articles);
-    const newArticle=articles.map((item)=>{
-      const fecha=item.date.toISOString().split("T")[0];
-      const article={_id: item._id,
+      .populate('author', ' completeName') // Obtiene solo el nombre del autor
+      .populate('editorId', 'completeName'); // Obtiene solo el nombre del editor
+    console.log(articles); // Debugging: Verificar qué datos llegan desde la BD
+    // Validar si hay artículos disponibles
+    if (!articles || articles.length === 0) {
+      return res.status(404).json({ message: 'No hay artículos publicados' });
+    }
+    // Formatear los artículos antes de enviarlos
+    const newArticle = articles.map((item) => {
+      // Validar que la fecha existe y convertirla al formato YYYY-MM-DD  
+      const fecha = item.date.toISOString().split("T")[0];
+      const article = {
+        _id: item._id,
         title: item.title,
-        subtitle: item.subtitle,
+        subtitle: item.subtitle || '', // Si no tiene subtitle, enviar string vacío
         date: fecha,
-        section: item.section,
-        image: item.image,
+        section: item.section || 'unknown', // Si no tiene sección, asignar "unknown"
+        image: item.image || null, // Si no tiene imagen, asignar null
         body: item.body,
-        author: item.author,
+        author: item.author ? item.author.completeName : 'Desconocido', // Si no hay autor, asignar "Desconocido",
         status: item.status,
-        editorId: item.editorId,
-        highlight: item.highlight
-        
-      }
-      return article;
-    })
+        editorId: item.editorId ? item.editorId.completeName : 'No asignado', // Si no hay editor, asignar "No asignado"
+        highlight: item.highlight || false, // Si no tiene highlight, asignar false
 
-    res.json(newArticle);
+      };
+      return article;
+    });
+
+    return res.status(200).json(newArticle);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Error en el servdor', error: error.message });
   }
 };
 const articlesByAuthor = async (req, res) => {
   const { idAutor } = req.params;  // Obtén el ID del autor desde los parámetros de la URL
 
   try {
-    // Busca al autor por ID (usamos populate para obtener los detalles completos del autor)
+    // Validación: Verificar que el ID sea un ObjectId válido de MongoDB
+    if (!idAutor || !idAutor.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'ID de autor no válido' });
+    }
+    // Buscar al autor por ID en la base de datos
     const author = await Users.findById(idAutor);
-    
+    // Si el autor no existe, devolver un error 404
     if (!author) {
       return res.status(404).json({ message: 'Autor no encontrado' });
     }
 
     // Buscar los artículos que tienen este ID de autor
     const articles = await Articles.find({ author: idAutor })
-      .populate('author', 'username completeName')  // Poblar el autor con nombre completo y username
-      .populate('editorId', 'username completeName');  // Poblar el editor
+      .sort({ date: -1 }) // Ordenar por fecha descendente
+      .populate('author', 'username completeName')  // Obtiene el autor con nombre completo y username
+      .populate('editorId', 'username completeName');  // Obtiene el editor con nombre completo y username
 
     // Si no hay artículos para este autor, devolver un mensaje
     if (articles.length === 0) {
@@ -55,7 +68,7 @@ const articlesByAuthor = async (req, res) => {
     }
 
     // Devuelve los artículos encontrados
-    return res.json(articles);
+    return res.status(200).json(articles);
 
   } catch (error) {
     // Manejo de errores
@@ -67,17 +80,22 @@ const articlesByEditor = async (req, res) => {
   const { idEditor } = req.params;  // Obtén el ID del editor desde los parámetros de la URL
 
   try {
+    //  Verificar que el ID es un ObjectId válido de MongoDB
+    if (!idEditor || !idEditor.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'ID de editor no válido' });
+    }
     // Verifica si el editor existe (usando el editorId en la base de datos)
     const editor = await Users.findById(idEditor);
-    
+    //  Si el editor no existe, devolver un error 404
     if (!editor) {
       return res.status(404).json({ message: 'Editor no encontrado' });
     }
 
     // Buscar los artículos que tienen este ID de editor (editorId)
     const articles = await Articles.find({ editorId: idEditor })
-      .populate('author', 'username completeName')  // Poblar el autor (nombre completo y nombre de usuario)
-      .populate('editorId', 'username completeName');  // Poblar el editor (nombre completo y nombre de usuario)
+      .sort({ date: -1 }) // Ordenar por fecha descendente
+      .populate('author', 'username completeName')  // Obtener el autor (nombre completo y nombre de usuario)
+      .populate('editorId', 'username completeName');  // Obtener el editor (nombre completo y nombre de usuario)
 
     // Si no hay artículos para este editor, devolver un mensaje
     if (articles.length === 0) {
@@ -85,7 +103,7 @@ const articlesByEditor = async (req, res) => {
     }
 
     // Devuelve los artículos encontrados
-    return res.json(articles);
+    return res.status(200).json(articles);
 
   } catch (error) {
     // Manejo de errores
@@ -97,6 +115,15 @@ const createArticle = async (req, res) => {
   try {
     // Hacemos un destructuring de los datos que vienen en el body de la solicitud
     const { title, subtitle, date, section, body, author, status, editorId, highlight } = req.body;
+    //Validaciones previas antes de proceder con la creación del artículo
+    // Verificar que los campos obligatorios están presentes
+    if (!title || !body || !author || !status) {
+      return res.status(400).json({ message: 'Los campos title, body, author y status son obligatorios' });
+    }
+    // Verificar si el `author` es un ID válido de MongoDB
+    if (!author.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'ID de autor no válido' });
+    }
 
     // Verificar que el autor y el editor existan en la base de datos
     const authorExists = await Users.findById(author);
@@ -118,8 +145,9 @@ const createArticle = async (req, res) => {
       editorId,
       highlight
     });
-    if (req.file){
-      newArticle.image=req.file.path;
+    //Manejo de imagen con Cloudinary si se proporciona una imagen
+    if (req.file) {
+      newArticle.image = req.file.path;
     }
 
     // Guardar el artículo en la base de datos
@@ -138,25 +166,26 @@ const detailArticleById = async (req, res) => {
   try {
     // Obtener el id desde los parámetros de la URL
     const { IdA } = req.params;  // Asegúrate de acceder al parámetro 'IdA'
-
+    //Verificar si el ID fue proporcionado
     if (!IdA) {
       return res.status(400).json({ message: "El ID es requerido." });
     }
 
-    // Buscar el artículo por su id y estado 'draft'
-    const articleId = await Articles.find({ 
-      _id: IdA, 
-         });
+    // Buscar el artículo en la base de datos
+    const articleId = await Articles.findById(IdA)
+      .populate("author", "username completeName") // Poblar información del autor
+      .populate("editorId", "username completeName"); // Poblar información del editor
 
-    if (articleId.length === 0) {
+    //Verificar si el artículo existe
+    if (!articleId) {
       return res.status(404).json({ message: "Artículo no encontrado." });
     }
 
     // Responder con los artículos encontrados
-    res.json(articleId);
+    return res.json(articleId);
   } catch (error) {
     // Manejo de errores
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "Error en el servidor", error: error.message });
   }
 };
 const updateArticleById = async (req, res) => {
@@ -170,23 +199,27 @@ const updateArticleById = async (req, res) => {
     if (!findArticle) {
       return res.status(404).json({ msg: 'Artículo no encontrado' });
     }
-    if (req.file){
-      articleUpdates.image=req.file.path;
+    // Si se adjunta una imagen, actualizar la ruta de la imagen
+    if (req.file) {
+      articleUpdates.image = req.file.path;
     }
-    
+    //Actualizar el artículo y devolver el documento actualizad
     const updatedArticle = await Articles.findByIdAndUpdate(id, articleUpdates, { new: true });
 
     // Si la actualización fue exitosa, responder con el artículo actualizado
-    return res.status(200).json({ message: 'Artículo actualizado correctamente', updatedArticle});
+    return res.status(200).json({ message: 'Artículo actualizado correctamente', updatedArticle });
   } catch (error) {
     // Manejo de errores
-    return res.status(400).json({ message: error.message });
+    console.error("Error al actualizar el artículo:", error);
+    return res.status(400).json({ message: "Error en el servidor", error: error.message });
   }
 };
 const updateStatus = async (req, res) => {
   try {
+    // Buscar el artículo en la base de datos usando el ID de los parámetros
     const article = await Articles.findById(req.params.id);
 
+    // Validar si el artículo no existe
     if (!article) {
       return res.status(404).json({ message: 'Artículo no encontrado' });
     }
@@ -208,7 +241,7 @@ const updateStatus = async (req, res) => {
         article.status = req.params.status; // Asume que el nuevo status está en req.params.status
         // Si el estado es 'publish', ponemos la fecha actual
         if (article.status === 'publish') {
-        article.date = new Date(); // Asigna la fecha actual
+          article.date = new Date(); // Asigna la fecha actual
         }
         await article.save();
         return res.json(article);
@@ -217,13 +250,15 @@ const updateStatus = async (req, res) => {
       }
     }
 
-    // Si el status no coincide con ninguna de las reglas anteriores
+    // Si el status no coincide con ninguna de las reglas anteriores  rechaza la solicitud
     return res.status(400).json({ message: 'Acción no permitida para este artículo.' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    // Manejo de errores
+    console.error("Error al actualizar el estado:", error);
+    return res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
 };
-const asignEditor = async (req, res) => { 
+const asignEditor = async (req, res) => {
   try {
     // Extraer el ID del artículo y el ID del editor desde los parámetros de la URL
     const idEditor = req.params.idE;  // ID del editor
@@ -231,7 +266,7 @@ const asignEditor = async (req, res) => {
 
     // Buscar el artículo por ID
     const article = await Articles.findById(idArticle);
-    
+
     // Si el artículo no existe, devolver un error 404
     if (!article) {
       return res.status(404).json({ message: 'Artículo no encontrado' });
@@ -244,7 +279,7 @@ const asignEditor = async (req, res) => {
 
     // Verificar si el artículo está en estado 'revisable'
     if (article.status !== 'revisable') {
-    return res.status(400).json({ message: 'Solo se pueden asignar artículos en revisión' });
+      return res.status(400).json({ message: 'Solo se pueden asignar artículos en revisión' });
     }
 
     // Buscar al editor por su ID
@@ -252,7 +287,7 @@ const asignEditor = async (req, res) => {
     if (!editor || editor.role !== 'editor') {
       return res.status(400).json({ message: 'Editor no válido o sin el rol adecuado' });
     }
-   
+
     // Asignar el editor al artículo
     article.editorId = idEditor;
 
@@ -261,33 +296,24 @@ const asignEditor = async (req, res) => {
 
     // Responder con el artículo actualizado
     return res.status(200).json({ message: 'Editor asignado con éxito', data: updatedArticle });
-    
+
   } catch (error) {
     // Manejo de errores generales
-    res.status(500).json({ message: error.message });
+    console.error("Error en la asignación del editor:", error);
+    return res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
 };
-const  imageUpload=async( req, res)=>{
-  try{
-  const newArticle=new Articles(req.body);
-  if(req.file.path){
-    newArticle.image=req.file.path;
-  }
-  const createdArticle=await newArticle.save();
-  return res.json(createdArticle);
-}catch(error){
-  return res.status(500).son({message:"Error al subir la imagen", error:error.message})
-}};
 
 
 
-module.exports =  {
+
+module.exports = {
   allPublishArticles,
-  articlesByAuthor, 
-  articlesByEditor, 
-  createArticle, 
-  detailArticleById, 
-  updateArticleById, 
-  updateStatus , 
-  asignEditor,
-  imageUpload}
+  articlesByAuthor,
+  articlesByEditor,
+  createArticle,
+  detailArticleById,
+  updateArticleById,
+  updateStatus,
+  asignEditor
+}
