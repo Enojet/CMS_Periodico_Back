@@ -1,13 +1,13 @@
-const multer=require("multer");//procesa archivos cuando el formualrio tiene la propiedad multy parge form data
-const cloudinary=require("cloudinary").v2;
-const {CloudinaryStorage}=require('multer-storage-cloudinary');//intermediario, coge y lo sube al cloudinary
+const multer = require("multer");// Procesa archivos cuando el formulario tiene la propiedad multipart/form-data
+const cloudinary = require("cloudinary").v2; // Interactuar con el servicio de Cloudinary
+const { CloudinaryStorage } = require('multer-storage-cloudinary');// Interactuar con el servicio de Cloudinary
 
-const storage=new CloudinaryStorage({
-    cloudinary:cloudinary,
-    params:{
-        folder:"imgNoticias",
-        allowedFormats:["jpg","png","jpeg","svg","gif"]
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary, // Instancia de Cloudinary
+    params: {
+        folder: "imgNoticias", // Nombre del folder en Cloudinary donde se guardarán las imágenes
+        allowedFormats: ["jpg", "png", "jpeg", "svg", "gif"] // Tipos de formatos permitidos
     }
 });
-const upload=multer({storage:storage});
-module.exports=upload;
+const upload = multer({ storage: storage });
+module.exports = upload;
