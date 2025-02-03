@@ -15,7 +15,7 @@ const allPublishArticles = async (req, res) => {
       const article={_id: item._id,
         title: item.title,
         subtitle: item.subtitle,
-        date: item.data,//fecha,
+        date: item.date,//fecha,
         section: item.section,
         image: item.image,
         body: item.body,
